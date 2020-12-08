@@ -1,19 +1,133 @@
-var boring = require('./boring');
-var query = require('pg-query');
-var express = require('express');
-var bodyParser = require("body-parser");
-var request = require('request');
+const errors = require('errors')
+const express = require('express')
+const bodyParser = require('body-parser')
+const Logger = require('logger')
+const boring = require('./boring')
+const db = require('./lib/db')
 
-query.connectionParameters = process.env.DATABASE_URL;
+const logger = new Logger('api')
+logger.setLevel(5)
 
+const tableExists = async (tablename, schema = 'public') => {
+  const query = {
+    text: 'SELECT COUNT(*)::INT AS count FROM information_schema.tables where table_name = $1 AND table_schema = $2',
+    values: [tablename, schema]
+  }
+  logger.debug(query)
+  const result = await db.query(query)
+  const exists = !!result.rows[0].count
+
+  logger.log(`Table "${schema}"."${tablename}"`, exists ? 'exists' : 'does not exist')
+  return exists
+}
+
+const createNotes = async () => {
+  const exists = await tableExists('notes')
+
+  if (exists) {
+    return
+  }
+
+  const query = `
+    CREATE TABLE "public"."notes" (
+      "id" serial,
+      "time_begin" int,
+      "time_end" int,
+      "note" text,
+      "ip" cidr,
+      "timestamp" timestamp,
+      "path" float[][],
+      "hidden" boolean,
+      "site" int NOT NULL DEFAULT 0,
+      PRIMARY KEY ("id")
+    )
+  `
+  logger.debug(query)
+  await db.query(query)
+}
+
+const createBlacklist = async () => {
+  const exists = await tableExists('blacklist')
+
+  if (exists) {
+    return
+  }
+
+  const query = `
+    CREATE TABLE "public"."blacklist" (
+      "ip" cidr,
+      PRIMARY KEY ("ip")
+    )
+  `
+  logger.debug(query)
+  await db.query(query)
+}
+
+const isDuplicate = async (ip, paths) => {
+  logger.debug('Check if duplicate', ip)
+  const query = {
+    text: `
+      SELECT
+        notes.id,
+        time_begin,
+        time_end,
+        note,
+        path,
+        timestamp
+      FROM
+        "public"."notes"
+      WHERE
+        ip = $1
+      ORDER BY
+        id DESC
+      LIMIT 1
+    `,
+    values: [ip]
+  }
+  logger.debug(query)
+  const result = await db.query(query)
+
+  const row = result.rows[0]
+  if (row && row.time_begin === Math.round(paths[0].time) && row.time_end === Math.round(paths[paths.length - 1].time)) {
+    logger.warn('Duplicate found for', ip, paths)
+    throw new errors.BadRequest('Duplicate')
+  }
+
+  logger.log('Not a duplicate, can proceed')
+}
+
+const checkRateLimit = async (ip) => {
+  logger.debug('Check if rate limited', ip)
+  const query = {
+    text: `
+      SELECT
+        COUNT(*)::INT AS count
+      FROM
+        "notes"
+      WHERE
+        ip = $1 AND
+        timestamp > NOW() - INTERVAL '10 minute'
+    `,
+    values: [ip]
+  }
+  logger.debug(query)
+  const result = await db.query(query)
+
+  if (result.rows.count > 15) {
+    logger.warn('Rate limit hit for IP', ip)
+    throw new errors.Forbidden('Note add rate limit')
+  }
+
+  logger.log('No rate limits, can proceed')
+}
 
 module.exports = {
-  setup: function(){
-    this.api = express();
-    this.api.use(bodyParser.json());
-    this.api.enable('trust proxy')
+  setup: () => {
+    const api = express()
+    api.use(bodyParser.json())
+    api.enable('trust proxy')
 
-    /*query("SELECT * FROM information_schema.tables where table_name = 'paths'", function(rows, ret){
+    /* query("SELECT * FROM information_schema.tables where table_name = 'paths'", function(rows, ret){
      if(ret.length == 0){
      query('CREATE TABLE "public"."paths" (\
      "id" serial,\
@@ -22,245 +136,218 @@ module.exports = {
      "note_id" int,\
      PRIMARY KEY ("id"));')
      }
-     });*/
+     }); */
 
-    query("SELECT * FROM information_schema.tables where table_name = 'notes'", function(rows, ret){
-      if(ret.length == 0){
-        query('CREATE TABLE "public"."notes" (\
-      "id" serial,\
-      "time_begin" int,\
-      "time_end" int,\
-      "note" text,\
-      "ip" cidr,\
-      "timestamp" timestamp,\
-      "path" float[][],\
-      "hidden" boolean,\
-      "site" int NOT NULL DEFAULT 0, \
-      PRIMARY KEY ("id"));')
+    createNotes()
+      .then(() => {
+        logger.log('Verified that the storage for notes exists')
+      })
+      .catch((err) => {
+        logger.error('Failed to verify that the storage for notes exists')
+        logger.error(err)
+      })
+
+    createBlacklist()
+
+    api.get('/notes/count', async (req, res, next) => {
+      const site = req.query.site || 0
+      const result = await db.query({
+        text: 'SELECT COUNT(*)::INT AS count FROM notes WHERE site = $1',
+        values: [site]
+      })
+
+      const count = result.rows[0]
+
+      if (!count) {
+        return res
+          .status(404)
+          .json({
+            status: 'error',
+            message: 'Site not found'
+          })
       }
-    });
 
-    query("SELECT * FROM information_schema.tables where table_name = 'blacklist'", function(rows, ret){
-      if(ret.length == 0){
-        query('CREATE TABLE "public"."blacklist" (\
-      "ip" cidr,\
-      PRIMARY KEY ("ip"));')
-      }
-    });
-
-    this.api.get('/notes/count', function (req, res) {
-      var site = req.query.site || 0;
-      query('SELECT count(*) FROM notes ' +
-        'where site = $1', [site], function(err, ret){
-        if(err){
-          res.status(500).send('Could not select notes');
-          console.log(err);
-          return;
-        }
-        if(!ret.length){
-          res.status(500).send('SELECT returned no results');
-          console.log(err);
-          return;
-        }
-        res.send(ret[0]);
-      });
+      res.send(count)
     })
 
-    this.api.get('/regex', function (req, res) {
+    api.get('/regex', (req, res, next) => {
       res.json({
         all: boring.getRegex(),
         psql: boring.getPsqlRegex(),
         parts: boring.getRegexes()
-      });
-    })
-
-    this.api.get('/clean', function (req, res) {
-      console.log('Cleaning: marking all boring content in database hidden.');
-      var psqlRegex = boring.getPsqlRegex();
-      query('update notes set hidden = true where hidden is null and lower(note) ~ $1 returning note',
-        [psqlRegex], function(err, ret) {
-          if(err){
-            res.status(500).send('Could not select notes');
-            console.log(err);
-            return;
-          }
-          res.send(ret.map(function(result) {
-            console.log("Done cleaning");
-            return result.note;
-          }));
       })
     })
 
-    this.api.get('/notes/recent/hidden', function (req, res) {
-      var limit = Math.min((req.query.limit || 250), 1000);
-      var site = req.query.site || 0;
-      query('select note from notes where hidden = true and site = $1 order by timestamp desc limit $2',
-        [site, limit], function(err, ret) {
-          if(err){
-            res.status(500).send('Could not select notes');
-            console.log(err);
-            return;
-          }
-          res.send(ret.map(function(result) {
-            return result.note;
-          }));
-        })
+    api.get('/clean', async (req, res, next) => {
+      console.log('Cleaning: marking all boring content in database hidden.')
+      const psqlRegex = boring.getPsqlRegex()
+
+      const result = await db.query({
+        text: 'UPDATE public.notes SET hidden = TRUE WHERE HIDDEN IS NULL AND LOWER(note) ~ $1 RETURNING note',
+        values: [psqlRegex]
+      })
+      res.send(result.rows.map(function (result) {
+        console.log('Done cleaning')
+        return result.note
+      }))
     })
 
-    this.api.get('/notes/recent/visible', function (req, res) {
-      var limit = Math.min((req.query.limit || 250), 1000);
-      var site = req.query.site || 0;
-      query('select note from notes where hidden is null and site = $1 order by timestamp desc limit $2',
-        [site, limit], function(err, ret) {
-          if(err){
-            res.status(500).send('Could not select notes');
-            console.log(err);
-            return;
-          }
-          res.send(ret.map(function(result) {
-            return result.note;
-          }));
-        })
+    api.get('/notes/recent/hidden', async (req, res, next) => {
+      const limit = Math.min((req.query.limit || 250), 1000)
+      const site = req.query.site || 0
+
+      const result = await db.query({
+        text: 'SELECT note FROM notes WHERE hidden = TRUE AND site = $1 ORDER BY timestamp DESC LIMIT $2',
+        values: [site, limit]
+      })
+
+      res.send(result.rows.map(row => row.note))
     })
 
-    this.api.get('/notes', function (req, res) {
-      var startTime = Math.round(req.query.timeframeStart);
-      var endTime = Math.round(req.query.timeframeEnd);
-      var ip = req.query.ip || req.ip;
-      var site = req.query.site || 0;
-      query(
-        'select id, time_begin, time_end, note, path ' +
-        'from notes ' +
-        'where time_end >= $1 ' +
-        'and time_begin <= $2 ' +
-        'and site = $3 ' +
-        'and ( ' +
-          'ip = $4 ' +
-          'or not ( ' +
-            'hidden is true ' +
-            'or ( ' +
-              'hidden is null ' +
-              'and exists( ' +
-                'select 1 ' +
-                'from blacklist ' +
-                'where ip = notes.ip)))) ' +
-        'limit 250',
-        [startTime, endTime, site, ip], function(err, ret){
-          if(err ){
-            res.status(500).send('Could not select notes');
-            console.log(err);
-            return;
-          }
+    api.get('/notes/recent/visible', async (req, res, next) => {
+      const limit = Math.min((req.query.limit || 250), 1000)
+      const site = req.query.site || 0
+      const result = await db.query({
+        text: 'SELECT note FROM notes WHERE hidden IS NULL AND site = $1 ORDER BY timestamp DESC LIMIT $2',
+        values: [site, limit]
+      })
 
-          for(var u=0;u<ret.length;u++){
-            var path = [];
-            for(var i=0;i<ret[u].path.length;i++){
-              path.push({
-                x: ret[u].path[i][0],
-                y: ret[u].path[i][1],
-                time: ret[u].path[i][2]
-              })
-            }
-            ret[u].path = path;
-          }
-
-          res.send(ret)
-        })
-
-    });
-
-
-    this.api.post('/notes', function (req, res) {
-
-      var paths = req.body.path;
-      var text = req.body.text;
-      var site = req.body.site;
-
-      if(paths.length < 2){
-        res.status(500).send('At least 2 points in a path are required');
-        return;
-      }
-
-      if(!text){
-        res.status(500).send('Text is missing');
-        return;
-      }
-
-      if(site === undefined){
-        res.status(500).send('Site is missing');
-        return;
-      }
-
-      if(text.length > 140) {
-        text = text.substr(0, 140);
-      }
-
-      // TODO value testing
-      var q = [];
-      for(var i=0;i<paths.length;i++){
-        q.push('{'+paths[i].x+','+paths[i].y+','+Math.round(paths[i].time)+'}');
-      }
-
-      // Get the last entry by the IP
-      query('SELECT notes.id, time_begin, time_end, note, path, timestamp ' +
-        'FROM "notes" ' +
-        'WHERE ip = $1 ' +
-        'ORDER BY id desc ' +
-        'LIMIT 1;',
-        [req.ip], function(err, ret){
-          if(err ){
-            res.status(500).send('Could not select notes');
-            console.log(err);
-            return;
-          }
-          if(ret.length > 0){
-            if(ret.time_begin == Math.round(paths[0].time) &&  ret.time_end ==  Math.round(paths[paths.length-1].time)){
-              res.status(500).send('Duplicate entry');
-              return;
-            }
-          }
-
-          query('SELECT count(*) as count ' +
-            'FROM "notes" ' +
-            'WHERE ip = $1 ' +
-            'AND timestamp > (now() - interval \'10 minute\');',
-            [req.ip], function(err, ret){
-              if(err ){
-                res.status(500).send('Could not select notes');
-                console.log(err);
-                return;
-              }
-              if(ret.length > 0 && ret[0].count > 15){
-                res.status(500).send('Note add rate limit');
-                return;
-              }
-
-              var hidden = boring.check(text);
-              query('INSERT INTO "public"."notes" ("time_begin", "time_end", "note", "ip", "timestamp", "path", "hidden", "site") VALUES ($1, $2, $3, $4, now(), $5, $6, $7) RETURNING id',
-                [
-                  Math.round(paths[0].time),
-                  Math.round(paths[paths.length-1].time),
-                  text,
-                  req.ip,
-                  "{"+ q.join(",")+"}",
-                  hidden ? true : null,
-                  site
-                ], function(err, ret) {
-
-                  if(err || ret.length == 0){
-                    res.status(500).send('Could not submit note');
-                    console.log(err);
-                    return;
-                  }
-
-                  var note_id = ret[0].id;
-                  res.send({id:note_id});
-                })
-            }
-          );
-        });
+      res.send(result.rows.map(row => row.note))
     })
 
+    api.get('/notes', async (req, res, next) => {
+      const startTime = Math.round(req.query.timeframeStart)
+      const endTime = Math.round(req.query.timeframeEnd)
+      const ip = req.query.ip || req.ip
+      const site = req.query.site || 0
+      const result = await db.query({
+        text: `
+          SELECT
+            id,
+            time_begin,
+            time_end,
+            note,
+            path
+          FROM
+            notes
+          WHERE
+            time_end >= $1 AND
+            time_begin <= $2 AND
+            site = $3 AND
+            (
+              ip = $4 OR NOT (
+                hidden IS TRUE OR (
+                  HIDDEN IS NULL AND
+                  EXISTS (
+                    SELECT 1 FROM blacklist WHERE ip = notes.ip
+                  )
+                )
+              )
+            )
+          LIMIT 250
+        `,
+        values: [startTime, endTime, site, ip]
+      })
+
+      const rows = result.rows.map(row => {
+        const path = row.path.map((p) => {
+          return {
+            x: p[0],
+            y: p[1],
+            time: p[2]
+          }
+        })
+
+        row.path = path
+        return row
+      })
+
+      res.send(rows)
+    })
+
+    api.post('/notes', async (req, res, next) => {
+      try {
+        const paths = req.body.path
+        let text = req.body.text
+        const site = req.body.site
+
+        if (paths.length < 2) {
+          res.status(400).send('At least 2 points in a path are required')
+          return
+        }
+
+        if (!text) {
+          res.status(400).send('Text is missing')
+          return
+        }
+
+        if (site === undefined) {
+          res.status(400).send('Site is missing')
+          return
+        }
+
+        if (text.length > 140) {
+          text = text.substr(0, 140)
+        }
+
+        // TODO value testing
+        const q = []
+        for (let i = 0; i < paths.length; i++) {
+          q.push('{' + paths[i].x + ',' + paths[i].y + ',' + Math.round(paths[i].time) + '}')
+        }
+
+        // Get the last entry by the IP
+        await isDuplicate(req.ip, paths)
+        await checkRateLimit(req.ip)
+        const hidden = boring.check(text)
+        const query = {
+          text: `
+            INSERT INTO
+              "public"."notes"
+              (
+                "time_begin",
+                "time_end",
+                "note",
+                "ip",
+                "timestamp",
+                "path",
+                "hidden",
+                "site"
+              )
+            VALUES
+              ($1, $2, $3, $4, NOW(), $5, $6, $7)
+            RETURNING
+              id
+          `,
+          values: [
+            Math.round(paths[0].time),
+            Math.round(paths[paths.length - 1].time),
+            text,
+            req.ip,
+            '{' + q.join(',') + '}',
+            hidden ? true : null,
+            site
+          ]
+        }
+        logger.debug(query)
+        const result = await db.query(query)
+
+        const id = result.rows[0].id
+        res.send({ id })
+      } catch (err) {
+        logger.error('Failed to create a note', err.message)
+        logger.debug(err.stack)
+
+        res
+          .status(err.statusCode || 500)
+          .json({
+            status: 'error',
+            error: err.message,
+            code: err.statusCode || 500
+          })
+      }
+    })
+
+    return api
   }
-
-};
+}
