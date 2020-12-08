@@ -5,3 +5,21 @@ public/style.css
 client_secret.json
 .sass-cache
 *.css.map
+npm-debug.log
+.fusebox
+.firstrun
+.DS_Store
+.directory
+config/local*.yml
+config/local*.yaml
+dist/
+tmp/
+docs/
+build/
+package-lock.json
+cached/
+uploads/
+*/tsconfig.json
+
+# NYC/Istanbul code coverage cache
+.nyc_output/
