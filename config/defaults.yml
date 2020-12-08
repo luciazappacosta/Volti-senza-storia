@@ -1,0 +1,6 @@
+---
+db:
+  host: 'localhost'
+  location: 'exhaustingacrowd'
+logger:
+  max_level: 3
