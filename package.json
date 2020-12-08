@@ -17,10 +17,10 @@
     "errors": "git+https://github.com/adrenalin/errors.git",
     "express": "~4.9.x",
     "helpers.js": "git+https://github.com/adrenalin/helpers.js.git",
+    "logger": "git+https://github.com/adrenalin/logger.git",
     "mobile-detect": "^1.2.0",
     "node-sass-middleware": "^0.11.0",
-    "pg": "^4.3.0",
-    "pg-query": "^0.11.0",
+    "pg": "^8.5.1",
     "raven": "^0.7.3",
     "request": "^2.55.0",
     "serve-favicon": "^2.2.1",
@@ -40,5 +40,29 @@
     "heroku",
     "express"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "babel-eslint": "^10.1.0",
+    "standard": "^16.0.3"
+  },
+  "standard": {
+    "parser": "babel-eslint",
+    "globals": [
+      "_",
+      "$",
+      "alert",
+      "describe",
+      "it",
+      "after",
+      "afterEach",
+      "before",
+      "beforeEach",
+      "localStorage",
+      "state",
+      "propTypes",
+      "defaultProps",
+      "google",
+      "ga"
+    ]
+  }
 }
