@@ -63,10 +63,15 @@
       "defaultProps",
       "google",
       "ga",
+      "moment",
+      "video",
+      "VideoPlayer",
+      "Clock",
       "SVG",
       "Path",
       "PathPoint",
-      "GLOBAL"
+      "GLOBAL",
+      "YT"
     ]
   }
 }
