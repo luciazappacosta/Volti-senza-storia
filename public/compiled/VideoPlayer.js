@@ -2,6 +2,7 @@
 console.log('loaded VideoPlayer script')
 const VideoPlayer = (function () { // eslint-disable-line no-unused-vars
   console.log('init VideoPlayer')
+
   function VideoPlayer (playlist, durations, modulusHours, events) {
     console.log('VideoPlayer constructor')
     const _this = this
@@ -48,7 +49,8 @@ const VideoPlayer = (function () { // eslint-disable-line no-unused-vars
         list: playlist,
         listType: 'playlist',
         start: 0,
-        mute: 1
+        mute: 1,
+        playsinline: 1
       },
       events: {
         onReady: function () {
@@ -62,17 +64,33 @@ const VideoPlayer = (function () { // eslint-disable-line no-unused-vars
     console.log('initialized')
   }
   VideoPlayer.prototype.updatePlayerSize = function () {
+    console.log('updatePlayerSize')
     const player = $('#videocontainer')
     const size = this.calculatePlayerSize()
-    player.css({
-      left: size.left,
-      top: size.top - 50,
-      width: size.width,
-      height: size.height + 100
-    })
+
+    $('#application')
+      .addClass('ready')
+      .on('click.play', () => {
+        $('#application')
+          .off('click.play')
+          .addClass('triggered')
+
+        this.ytplayer.playVideo()
+      })
+
+    player
+      .css({
+        left: size.left,
+        top: size.top - 50,
+        width: size.width,
+        height: size.height + 100
+      })
+
     // updateMouseTrail();
   }
+
   VideoPlayer.prototype.clientToVideoCoord = function (clientX, clientY) {
+    // console.log('clientToVideoCoord', clientX, clientY)
     const playerSize = this.calculatePlayerSize()
     const ret = {
       x: clientX,
@@ -84,6 +102,7 @@ const VideoPlayer = (function () { // eslint-disable-line no-unused-vars
     ret.y /= playerSize.height
     return ret
   }
+
   VideoPlayer.prototype.videoToClientCoord = function (videoX, videoY) {
     const playerSize = this.calculatePlayerSize()
     const ret = {
@@ -96,6 +115,7 @@ const VideoPlayer = (function () { // eslint-disable-line no-unused-vars
     ret.y += playerSize.top
     return ret
   }
+
   VideoPlayer.prototype.calculatePlayerSize = function () {
     let left = 0
     let top = 0
@@ -120,9 +140,13 @@ const VideoPlayer = (function () { // eslint-disable-line no-unused-vars
     }
     return { left: left, top: top, width: width, height: height }
   }
+
   VideoPlayer.prototype.frameUpdate = function () {
+    console.log('frameUpdate')
+
     const timeUpdated = this.ytplayer.getCurrentTime() * 1000
     const playing = this.ytplayer.getPlayerState()
+
     if (playing) {
       if (this._last_time_update === timeUpdated) {
         this.currentTime += 10
@@ -137,17 +161,19 @@ const VideoPlayer = (function () { // eslint-disable-line no-unused-vars
     }
 
     this._last_time_update = timeUpdated
-    if (this.events.onNewFrame) { this.events.onNewFrame(this) }
-    /*        updateAnimation();
-         updateNotes();
-         updateVideoLoop(); */
+    if (this.events.onNewFrame) {
+      this.events.onNewFrame(this)
+    }
   }
+
   VideoPlayer.prototype.seek = function (ms, cb, dontFetchApi) {
+    console.log('seek', ms)
     const _this = this
     if (ms > this.totalDur) {
       ms %= this.totalDur // loops back around to 3:00 - 3:27
     }
     let relativeMs
+
     for (let i = 0; i < this.startTimes.length - 1; i++) {
       if (ms < this.startTimes[i + 1]) {
         if (this.ytplayer.getPlaylistIndex() !== i) {
@@ -158,7 +184,9 @@ const VideoPlayer = (function () { // eslint-disable-line no-unused-vars
         break
       }
     }
+
     this.currentTime = ms
+
     // Start an interval and wait for the video to play again
     const interval = setInterval(function () {
       if (_this.ytplayer.getPlayerState()) {
@@ -167,30 +195,44 @@ const VideoPlayer = (function () { // eslint-disable-line no-unused-vars
           api.fetchNotes(ms)
         }
 
-        if (cb) { cb() }
+        if (cb) {
+          cb()
+        }
       }
     }, 100)
   }
+
   VideoPlayer.prototype.onPlayerReady = function () {
+    console.log('onPlayerReady')
     this.updatePlayerSize()
   }
+
   VideoPlayer.prototype.onPlayerStateChange = function () {
+    console.log('onPlayerStateChange')
     const _this = this
-    if (this.stateChangeCallback) { this.stateChangeCallback(this.ytplayer.getPlayerState()) }
+
+    if (this.stateChangeCallback) {
+      this.stateChangeCallback(this.ytplayer.getPlayerState())
+    }
+
     this.ytplayer.mute()
+
     if (this.ytplayer.getPlayerState() === 0) {
       this.seek(0)
     }
+
     if (this.loading && this.ytplayer.getPlayerState() === 1) {
       this.loading = false
       if (this.events.onLoadComplete) {
         this.events.onLoadComplete(this)
       }
+
       setInterval(function () {
         _this.frameUpdate()
       }, 10)
     }
   }
+
   // use this from the frontend for testing
   VideoPlayer.prototype.setClock = function (time, cb) {
     this.setTime(moment(time, ['H:mm', 'HH:mm', 'HH:mm:ss', 'H:mm:ss']))
