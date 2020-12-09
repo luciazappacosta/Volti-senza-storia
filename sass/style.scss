@@ -44,10 +44,15 @@ $orangeHover: darken($orange, 12%);
 $transparentBlack: rgba(0,0,0,0.8);
 $transparentBlackHover: rgba(0,0,0,0.9);
 
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
 body {
-  padding:0;
-  margin:0;
-  overflow:hidden;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
   font-family: 'Dosis', sans-serif;
   @include font-smoothing(on); /* good for light text on dark bg */
   font-weight: 400;
@@ -59,12 +64,21 @@ body {
   display: none;
 }
 
+#application {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+}
+
 #videocontainer {
-  position:absolute;
-  top:0;
-  width:100%;
-  height:100%;
-  overflow:hidden;
+  position: absolute;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
 
   -webkit-transition: -webkit-filter 250ms;
 
@@ -73,19 +87,19 @@ body {
   }
 
   #ytplayer {
-    width:100%;
-    height:100%;
+    width: 100%;
+    height: 100%;
   }
 
   #drawing , #linedrawing{
-    position:absolute;
-    top:0;
-    margin-bottom:50px;
-    margin-top:50px;
-    left:0;
-    width:100%;
-    //height:100%;
-    bottom:0;
+    position: absolute;
+    top: 0;
+    margin-bottom: 50px;
+    margin-top: 50px;
+    left: 0;
+    width: 100%;
+    //height: 100%;
+    bottom: 0;
 
   }
 }
@@ -117,7 +131,7 @@ body {
 }
 
 #logoHeader {
-  position:absolute;
+  position: absolute;
   top: $edgePad;
   right: $edgePad;
   display: inline-block;
@@ -128,7 +142,7 @@ body {
 }
 
 #locationHeader {
-  position:absolute;
+  position: absolute;
   top: $edgePad;
   left: $edgePad;
   display: inline-block;
@@ -181,23 +195,23 @@ body {
 
 
 #clickArea {
-  height:100%;
-  width:100%;
-  position:absolute;
-  top:0;
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  top: 0;
   cursor: crosshair;
   z-index: 96;
 }
 
 #credits {
-  opacity:0;
-  display:none;
+  opacity: 0;
+  display: none;
   background-color: $transparentBlack;
-  //display:none;
-  width:100%;
-  height:100%;
-  left:0;
-  top:0;
+  //display: none;
+  width: 100%;
+  height: 100%;
+  left: 0;
+  top: 0;
   position: absolute;
   z-index: 100;
 
@@ -240,10 +254,10 @@ body {
 }
 
 #overlay {
-  /*height:100%;
-  width:100%;
-  position:absolute;
-  top:0;
+  /*height: 100%;
+  width: 100%;
+  position: absolute;
+  top: 0;
   z-index: 99;*/
 
   #rewind, #back {
@@ -257,8 +271,8 @@ body {
     @include no-select;
 
     img {
-      width:100%;
-      height:100%;
+      width: 100%;
+      height: 100%;
     }
 
     .tooltip {
@@ -267,7 +281,7 @@ body {
       width: 200%;
       left: 11vmin;
       vertical-align: middle;
-      display:none;
+      display: none;
 
     }
   }
@@ -276,14 +290,14 @@ body {
     cursor: pointer;
     opacity: .80;
     .tooltip {
-      display:inline;
+      display: inline;
     }
   }
 
   .note {
     z-index: 95;
 
-    position:absolute;
+    position: absolute;
     max-width: $noteTextWidth;
     word-wrap: break-word;
     @include no-select;
@@ -293,7 +307,7 @@ body {
       .note-white {
         background-color: rgba(255, 255, 255, 0.1);
       }
-      // border:1px solid rgba(255,255,255,0.4);
+      // border: 1px solid rgba(255,255,255,0.4);
     }
 
     .note-text {
@@ -314,14 +328,14 @@ body {
     }
     z-index: 100;
 
-    right:0;
+    right: 0;
     width: 50%;
     background-color: $transparentBlack;
-    height:100%;
+    height: 100%;
     position: absolute;
 
     #note-header {
-      font-size:5.6vw;
+      font-size: 5.6vw;
       color: black;
       margin-left: 4vmin;
       margin-top: 2vmin;
@@ -341,8 +355,8 @@ body {
     //  background-color: rgba(255, 255, 255, 0.57);
 
       textarea {
-        width:100%;
-        height:100%;
+        width: 100%;
+        height: 100%;
 
         border: 0;
         color: white;
@@ -398,14 +412,14 @@ body {
 
 
 #loading {
-  width:100%;
-  height:100%;
-  left:0;
-  top:0;
+  width: 100%;
+  height: 100%;
+  left: 0;
+  top: 0;
   position: absolute;
   z-index: 100;
   text-align: center;
-  background-color:white;
+  background-color: white;
   @include no-select;
   cursor: default;
 
@@ -434,14 +448,14 @@ body {
 }
 
 #browser-error {
-  color:black;
-  text-align:center;
+  color: black;
+  text-align: center;
   top: 100px;
-  position:relative;
-  font-size:2em;
+  position: relative;
+  font-size: 2em;
 
   #title {
-    font-size:2em;
+    font-size: 2em;
     line-height: 2em;
   }
 
