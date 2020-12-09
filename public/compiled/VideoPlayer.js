@@ -1,6 +1,9 @@
 /// <reference path="../typings/tsd.d.ts" />
+console.log('loaded VideoPlayer script')
 const VideoPlayer = (function () { // eslint-disable-line no-unused-vars
+  console.log('init VideoPlayer')
   function VideoPlayer (playlist, durations, modulusHours, events) {
+    console.log('VideoPlayer constructor')
     const _this = this
     this.aspect = 16.0 / 9.0
     this.zoom = 1.0
@@ -15,6 +18,7 @@ const VideoPlayer = (function () { // eslint-disable-line no-unused-vars
     // onStateChange callback
     this.stateChangeCallback = function (state) {
     }
+
     this.durations = durations
     this.modulusHours = modulusHours
     // Populate the startTimes array
@@ -26,6 +30,7 @@ const VideoPlayer = (function () { // eslint-disable-line no-unused-vars
     this.startTimes.push(_dur)
     this.totalDur = _dur
     this.events = events
+    console.log('will initialize YT.Player')
     this.ytplayer = new YT.Player('ytplayer', {
       height: 390,
       width: 640,
@@ -54,6 +59,7 @@ const VideoPlayer = (function () { // eslint-disable-line no-unused-vars
         }
       }
     })
+    console.log('initialized')
   }
   VideoPlayer.prototype.updatePlayerSize = function () {
     const player = $('#videocontainer')
@@ -124,7 +130,6 @@ const VideoPlayer = (function () { // eslint-disable-line no-unused-vars
 
       if (this._last_time_update !== timeUpdated) {
         this.currentTime = timeUpdated
-        // console.log(time_update);
         if (this.startTimes[this.ytplayer.getPlaylistIndex()]) {
           this.currentTime += this.startTimes[this.ytplayer.getPlaylistIndex()]
         }
@@ -139,7 +144,6 @@ const VideoPlayer = (function () { // eslint-disable-line no-unused-vars
   }
   VideoPlayer.prototype.seek = function (ms, cb, dontFetchApi) {
     const _this = this
-    // console.log('seek: ' + ms);
     if (ms > this.totalDur) {
       ms %= this.totalDur // loops back around to 3:00 - 3:27
     }
@@ -194,6 +198,7 @@ const VideoPlayer = (function () { // eslint-disable-line no-unused-vars
 
   // use this from the backend to avoid time parsing problems
   VideoPlayer.prototype.setTime = function (time, cb) {
+    console.log('VideoPlayer.setTime', time, cb)
     // use the startTime data
     const target = moment(Clock.startTime)
     // use the time hours, minutes, seconds
@@ -215,6 +220,7 @@ const VideoPlayer = (function () { // eslint-disable-line no-unused-vars
     }
     console.log(moment(Clock.startTime).add(diff, 'milliseconds').format())
     video.seek(diff, cb)
+    console.log('-- seeking')
   }
   return VideoPlayer
 })()

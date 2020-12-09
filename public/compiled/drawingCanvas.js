@@ -1,4 +1,4 @@
-
+console.log('loaded DrawingCanvas script')
 /// <reference path="../typings/tsd.d.ts" />
 /// <reference path="global.ts" />
 /// <reference path="api.ts" />

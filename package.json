@@ -61,6 +61,7 @@
       "state",
       "propTypes",
       "defaultProps",
+      "api",
       "google",
       "ga",
       "moment",
