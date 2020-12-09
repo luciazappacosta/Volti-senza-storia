@@ -1,10 +1,11 @@
 /// <reference path="../typings/tsd.d.ts" />
-console.log('loaded VideoPlayer script')
-const VideoPlayer = (function () { // eslint-disable-line no-unused-vars
-  console.log('init VideoPlayer')
+const YT_VIDEO_STATE_UNSTARTED = -1
+const YT_VIDEO_STATE_ENDED = 0
+const YT_VIDEO_STATE_PLAYING = 1
+const YT_VIDEO_STATE_CUED = 5
 
+const VideoPlayer = (function () { // eslint-disable-line no-unused-vars
   function VideoPlayer (playlist, durations, modulusHours, events) {
-    console.log('VideoPlayer constructor')
     const _this = this
     this.aspect = 16.0 / 9.0
     this.zoom = 1.0
@@ -31,7 +32,6 @@ const VideoPlayer = (function () { // eslint-disable-line no-unused-vars
     this.startTimes.push(_dur)
     this.totalDur = _dur
     this.events = events
-    console.log('will initialize YT.Player')
     this.ytplayer = new YT.Player('ytplayer', {
       height: 390,
       width: 640,
@@ -61,22 +61,20 @@ const VideoPlayer = (function () { // eslint-disable-line no-unused-vars
         }
       }
     })
-    console.log('initialized')
   }
   VideoPlayer.prototype.updatePlayerSize = function () {
-    console.log('updatePlayerSize')
     const player = $('#videocontainer')
     const size = this.calculatePlayerSize()
 
-    $('#application')
-      .addClass('ready')
-      .on('click.play', () => {
-        $('#application')
-          .off('click.play')
-          .addClass('triggered')
-
-        this.ytplayer.playVideo()
-      })
+    // $('#application')
+    //   .addClass('ready')
+    //   .on('click.play', () => {
+    //     $('#application')
+    //       .off('click.play')
+    //       .addClass('triggered')
+    //
+    //     this.ytplayer.playVideo()
+    //   })
 
     player
       .css({
@@ -90,7 +88,6 @@ const VideoPlayer = (function () { // eslint-disable-line no-unused-vars
   }
 
   VideoPlayer.prototype.clientToVideoCoord = function (clientX, clientY) {
-    // console.log('clientToVideoCoord', clientX, clientY)
     const playerSize = this.calculatePlayerSize()
     const ret = {
       x: clientX,
@@ -142,10 +139,8 @@ const VideoPlayer = (function () { // eslint-disable-line no-unused-vars
   }
 
   VideoPlayer.prototype.frameUpdate = function () {
-    console.log('frameUpdate')
-
     const timeUpdated = this.ytplayer.getCurrentTime() * 1000
-    const playing = this.ytplayer.getPlayerState()
+    const playing = this.ytplayer.getPlayerState() === 1
 
     if (playing) {
       if (this._last_time_update === timeUpdated) {
@@ -167,7 +162,6 @@ const VideoPlayer = (function () { // eslint-disable-line no-unused-vars
   }
 
   VideoPlayer.prototype.seek = function (ms, cb, dontFetchApi) {
-    console.log('seek', ms)
     const _this = this
     if (ms > this.totalDur) {
       ms %= this.totalDur // loops back around to 3:00 - 3:27
@@ -203,25 +197,25 @@ const VideoPlayer = (function () { // eslint-disable-line no-unused-vars
   }
 
   VideoPlayer.prototype.onPlayerReady = function () {
-    console.log('onPlayerReady')
     this.updatePlayerSize()
   }
 
   VideoPlayer.prototype.onPlayerStateChange = function () {
-    console.log('onPlayerStateChange')
+    const state = this.ytplayer.getPlayerState()
+    console.log('onPlayerStateChange', state)
     const _this = this
 
     if (this.stateChangeCallback) {
-      this.stateChangeCallback(this.ytplayer.getPlayerState())
+      this.stateChangeCallback(state)
     }
 
     this.ytplayer.mute()
 
-    if (this.ytplayer.getPlayerState() === 0) {
+    if (state === YT_VIDEO_STATE_ENDED) {
       this.seek(0)
     }
 
-    if (this.loading && this.ytplayer.getPlayerState() === 1) {
+    if (this.loading && state === YT_VIDEO_STATE_PLAYING) {
       this.loading = false
       if (this.events.onLoadComplete) {
         this.events.onLoadComplete(this)
@@ -240,7 +234,6 @@ const VideoPlayer = (function () { // eslint-disable-line no-unused-vars
 
   // use this from the backend to avoid time parsing problems
   VideoPlayer.prototype.setTime = function (time, cb) {
-    console.log('VideoPlayer.setTime', time, cb)
     // use the startTime data
     const target = moment(Clock.startTime)
     // use the time hours, minutes, seconds
@@ -260,9 +253,7 @@ const VideoPlayer = (function () { // eslint-disable-line no-unused-vars
     if (diff > this.totalDur) {
       diff -= Math.floor(Math.random() * this.modulusHours) * hourMillis
     }
-    console.log(moment(Clock.startTime).add(diff, 'milliseconds').format())
     video.seek(diff, cb)
-    console.log('-- seeking')
   }
   return VideoPlayer
 })()
