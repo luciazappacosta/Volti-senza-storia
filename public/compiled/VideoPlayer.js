@@ -68,13 +68,15 @@ const VideoPlayer = (function () { // eslint-disable-line no-unused-vars
 
     $('#application')
       .addClass('ready')
-    //   .on('click.play', () => {
-    //     $('#application')
-    //       .off('click.play')
-    //       .addClass('triggered')
-    //
-    //     this.ytplayer.playVideo()
-    //   })
+
+    $(document)
+      .on('click.play touch.play', () => {
+        $(document).off('click.play touch.play')
+        if (this.ytplayer.getPlayerState() !== YT_VIDEO_STATE_PLAYING) {
+          this.ytplayer.playVideo()
+          return false
+        }
+      })
 
     player
       .css({
