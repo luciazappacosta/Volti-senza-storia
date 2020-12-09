@@ -1,3 +1,4 @@
+
 /// <reference path="../typings/tsd.d.ts" />
 /// <reference path="global.ts" />
 /// <reference path="api.ts" />
@@ -132,28 +133,42 @@ const DrawingCanvas = (function () { // eslint-disable-line no-unused-vars
         }
 
         startDrawing(e.originalEvent.touches[0].clientX, e.originalEvent.touches[0].clientY)
+
+        e.preventDefault()
+        e.stopPropagation()
+        return false
       })
       .on('touchmove', (e) => {
         prevTouches = e.originalEvent.touches
-        endDrawing(e.originalEvent.touches[0].clientX, e.originalEvent.touches[0].clientY)
+        onDraw(e.originalEvent.touches[0].clientX, e.originalEvent.touches[0].clientY)
+
+        e.preventDefault()
+        e.stopPropagation()
+        return false
       })
       .on('touchend', (e) => {
-        console.log('touchend', e)
         if (!prevTouches || prevTouches.length !== 1) {
           return
         }
 
-        prevTouches = null
         endDrawing(prevTouches[0].clientX, prevTouches[0].clientY)
+        prevTouches = null
+
+        e.preventDefault()
+        e.stopPropagation()
+        return false
       })
       .on('touchcancel', (e) => {
-        console.log('touchcancel', e)
         if (!prevTouches || prevTouches.length !== 1) {
           return
         }
 
-        prevTouches = null
         endDrawing(prevTouches[0].clientX, prevTouches[0].clientY)
+        prevTouches = null
+
+        e.preventDefault()
+        e.stopPropagation()
+        return false
       })
 
     $(window)
@@ -179,7 +194,7 @@ const DrawingCanvas = (function () { // eslint-disable-line no-unused-vars
   }
 
   DrawingCanvas.prototype.updateAnimation = function () {
-    if (!GLOBAL.editorMode()) {
+    if (!GLOBAL.editorMode()) { // eslint-disable-line node/no-deprecated-api
       return
     }
 
@@ -192,9 +207,11 @@ const DrawingCanvas = (function () { // eslint-disable-line no-unused-vars
     const c = $('#drawing')
     const scaleX = c.width()
     const scaleY = c.height()
+
     if (!this.circle) {
       this.circle = this.drawing.circle(50).attr({ fill: 'white', opacity: 0.5 })
     }
+
     this.circle.move(p.x * scaleX - 25, p.y * scaleY - 25)
     this.video.zoomPos.x = p.x
     this.video.zoomPos.y = p.y
@@ -251,7 +268,6 @@ const DrawingCanvas = (function () { // eslint-disable-line no-unused-vars
     }
 
     const pos = video.videoToClientCoord(p.x, p.y)
-    //  console.log(p,pos);
     if (pos !== note.curPos) {
       if (!note.curPos) {
         note.curPos = pos
@@ -303,10 +319,7 @@ const DrawingCanvas = (function () { // eslint-disable-line no-unused-vars
         top: note.curPos.y + offset.y,
         left: note.curPos.x + offset.x
       })
-      /* console.log({
-                   top: note.curPos.y,
-                       left: note.curPos.x
-               }) */
+
       const c = $('#drawing')
       const scaleX = c.width()
       const scaleY = c.height()
