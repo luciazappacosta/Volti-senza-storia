@@ -66,8 +66,8 @@ const VideoPlayer = (function () { // eslint-disable-line no-unused-vars
     const player = $('#videocontainer')
     const size = this.calculatePlayerSize()
 
-    // $('#application')
-    //   .addClass('ready')
+    $('#application')
+      .addClass('ready')
     //   .on('click.play', () => {
     //     $('#application')
     //       .off('click.play')
