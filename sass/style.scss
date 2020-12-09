@@ -1,3 +1,11 @@
+@mixin vendors($key, $value) {
+  -webkit-#{$key}: $value;
+  -moz-#{$key}: $value;
+  -ms-#{$key}: $value;
+  -o-#{$key}: $value;
+  #{$key}: $value;
+}
+
 @mixin filter($filter-type,$filter-amount) {
   -webkit-filter: $filter-type+unquote('(#{$filter-amount})');
   -moz-filter: $filter-type+unquote('(#{$filter-amount})');
@@ -31,6 +39,8 @@ $innerPad: 1vmin;
 
 $noteTextWidth: 165px;
 
+$orange: #f75b00;
+$orangeHover: darken($orange, 12%);
 $transparentBlack: rgba(0,0,0,0.8);
 $transparentBlackHover: rgba(0,0,0,0.9);
 
@@ -196,7 +206,7 @@ body {
 
   @include no-select;
   cursor: default;
-  
+
   .credits-content {
     position: relative;
     top: 30vh;
@@ -250,7 +260,7 @@ body {
       width:100%;
       height:100%;
     }
-    
+
     .tooltip {
       position: absolute;
       top: 4vmin;
@@ -258,7 +268,7 @@ body {
       left: 11vmin;
       vertical-align: middle;
       display:none;
-      
+
     }
   }
 
@@ -295,6 +305,13 @@ body {
   }
 
   #addNoteInterface {
+    @media only screen and (max-width: 600px) {
+      left: 0;
+      top: 50%;
+      bottom: 0;
+      width: 100%;
+      height: 50%;
+    }
     z-index: 100;
 
     right:0;
@@ -339,10 +356,12 @@ body {
     }
 
     #submitButton {
+      @include vendors(transition-property, all);
+      @include vendors(transition-duration, 400ms);
       right: 0;
       left: 0;
       bottom: 0;
-      background-color: $transparentBlack;
+      background-color: $orange;
       color: white;
       position: absolute;
       margin: 4vmin;
@@ -351,9 +370,11 @@ body {
       @include no-select;
       cursor: pointer;
       text-align: center;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0);
 
       &:hover {
-        background-color: $transparentBlackHover;
+        background-color: $orangeHover;
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
       }
     }
   }
