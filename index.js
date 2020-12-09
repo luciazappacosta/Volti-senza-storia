@@ -1,5 +1,4 @@
 const favicon = require('serve-favicon')
-const MobileDetect = require('mobile-detect')
 const express = require('express')
 const sassMiddleware = require('node-sass-middleware')
 
@@ -63,7 +62,7 @@ app.get('/', function (req, res) {
 
 sites.forEach(function (site) {
   app.get('/' + site, function (req, res) {
-    returnSite(req, res)
+    res.sendFile(path.join(__dirname, 'public/index.html'))
   })
 })
 
@@ -75,12 +74,3 @@ app.use('/api', api)
 app.listen(app.get('port'), function () {
   console.log('Node app is running at localhost:' + app.get('port'))
 })
-
-function returnSite (req, res) {
-  const md = new MobileDetect(req.headers['user-agent'])
-  if (md.mobile()) {
-    return res.sendFile(path.join(__dirname, 'public/mobile.html'))
-  }
-
-  res.sendFile(path.join(__dirname, 'public/index.html'))
-}

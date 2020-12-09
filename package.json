@@ -62,7 +62,11 @@
       "propTypes",
       "defaultProps",
       "google",
-      "ga"
+      "ga",
+      "SVG",
+      "Path",
+      "PathPoint",
+      "GLOBAL"
     ]
   }
 }
