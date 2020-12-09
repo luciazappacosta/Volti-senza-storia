@@ -1,8 +1,8 @@
 /// <reference path="../typings/tsd.d.ts" />
 /// <reference path="global.ts" />
-var Interface = (function () {
+const Interface = (function () { // eslint-disable-line no-unused-vars
   function Interface (events) {
-    var _this = this
+    const _this = this
     this.events = events
     $(window).resize(function () {
       if (_this.events.onResize) { _this.events.onResize() }
@@ -21,7 +21,7 @@ var Interface = (function () {
     })
   }
   Interface.prototype.hideVideo = function (cb) {
-    var e = $('#persistent-spinner')
+    const e = $('#persistent-spinner')
     e.show()
     e.animate({ opacity: '1' }, 250, function () {
       $('#videocontainer').addClass('blur')
@@ -29,7 +29,7 @@ var Interface = (function () {
     })
   }
   Interface.prototype.showVideo = function (cb) {
-    var e = $('#persistent-spinner')
+    const e = $('#persistent-spinner')
     e.animate({ opacity: '0' }, 250, function () {
       e.hide()
       $('#videocontainer').removeClass('blur')
@@ -42,7 +42,7 @@ var Interface = (function () {
     $('#credits').show().animate({ opacity: '1' }, 500)
   }
   Interface.prototype.hideCredits = function () {
-    var e = $('#credits')
+    const e = $('#credits')
     e.animate({ opacity: '0' }, 500, function () {
       $('#credits').hide()
     })
