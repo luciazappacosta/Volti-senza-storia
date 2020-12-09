@@ -69,9 +69,22 @@ const VideoPlayer = (function () { // eslint-disable-line no-unused-vars
     $('#application')
       .addClass('ready')
 
-    $(document)
+    const removeOverlay = () => {
+      $('#application')
+        .addClass('triggered')
+        .off('click.play touch.play')
+    }
+
+    const checkIfPlaying = setInterval(() => {
+      if (this.ytplayer.getPlayerState() === YT_VIDEO_STATE_PLAYING) {
+        removeOverlay()
+        clearInterval(checkIfPlaying)
+      }
+    }, 100)
+
+    $('#application')
       .on('click.play touch.play', () => {
-        $(document).off('click.play touch.play')
+        removeOverlay()
         if (this.ytplayer.getPlayerState() !== YT_VIDEO_STATE_PLAYING) {
           this.ytplayer.playVideo()
           return false
@@ -204,7 +217,6 @@ const VideoPlayer = (function () { // eslint-disable-line no-unused-vars
 
   VideoPlayer.prototype.onPlayerStateChange = function () {
     const state = this.ytplayer.getPlayerState()
-    console.log('onPlayerStateChange', state)
     const _this = this
 
     if (this.stateChangeCallback) {
