@@ -1,4 +1,3 @@
-console.log('loaded DrawingCanvas script')
 /// <reference path="../typings/tsd.d.ts" />
 /// <reference path="global.ts" />
 /// <reference path="api.ts" />
@@ -328,7 +327,6 @@ const DrawingCanvas = (function () { // eslint-disable-line no-unused-vars
     }
   }
   DrawingCanvas.prototype.removeNote = function (note) {
-    // console.log("Remove ", note);
     note.elm.remove()
     note.line.plot([])
     delete note.line
