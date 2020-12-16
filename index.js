@@ -47,7 +47,7 @@ app.use(sassMiddleware({
 }))
 
 // Add new locations here.
-const sites = ['london', 'netherlands', 'birmingham', 'gwangju', 'beijing']
+const sites = ['pescara']
 
 function randomChoice (array) {
   return array[Math.floor(Math.random() * array.length)]

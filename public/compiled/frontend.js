@@ -7,40 +7,12 @@
 /// <reference path="clock.ts" />
 // Add new locations here.
 const sites = {
-  london: {
+  pescara: {
     id: 0,
-    playlist: 'PLscUku2aaZnFE-7wKovrbi76b26VKxIT-',
-    videoDurations: [7650, 4941, 7424, 7264, 6835, 7128],
-    startTime: 'April 15, 2015 15:00:00',
+    playlist: 'PLF1gLzjabatkm9K5gpQLiWy1uoP4dJCtS',
+    videoDurations: [761],
+    startTime: 'December 16, 2020 12:00:00',
     modulusHours: 12
-  },
-  netherlands: {
-    id: 1,
-    playlist: 'PLscUku2aaZnEISIU_BFatpXUd91DFyRVA',
-    videoDurations: [(1 * 60 * 60) + (2 * 60) + 15],
-    startTime: 'April 15, 2015 12:00:00',
-    modulusHours: 1
-  },
-  birmingham: {
-    id: 2,
-    playlist: 'PLscUku2aaZnGRbIOS1LGUt9GeDBX159yY',
-    videoDurations: [(1 * 60 * 60) + (0 * 60) + 1],
-    startTime: 'April 15, 2015 12:00:00',
-    modulusHours: 1
-  },
-  gwangju: {
-    id: 3,
-    playlist: 'PLscUku2aaZnE7jj8SNk1nxWTTSXlOYLpP',
-    videoDurations: [(1 * 60 * 60) + (0 * 60) + 1],
-    startTime: 'April 15, 2015 12:00:00',
-    modulusHours: 1
-  },
-  beijing: {
-    id: 4,
-    playlist: 'PLscUku2aaZnFTPxiEpcZHVCqhCFb_x4az',
-    videoDurations: [(1 * 60 * 60) + (0 * 60) + 1],
-    startTime: 'April 15, 2015 12:00:00',
-    modulusHours: 1
   }
 }
 var recording = false
