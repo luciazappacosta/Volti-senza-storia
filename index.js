@@ -1,6 +1,7 @@
 const favicon = require('serve-favicon')
 const express = require('express')
 const sassMiddleware = require('node-sass-middleware')
+const config = require('./lib/config')
 
 const path = require('path')
 
@@ -34,11 +35,11 @@ if (process.env.PASSWORD) {
   app.use('/', auth)
 }
 
-app.set('port', (process.env.PORT || 5000))
+app.set('port', config.get('server.port', 5000))
 
 app.use(favicon(path.join(__dirname, 'public/favicon.ico')))
 
-// adding the sass middleware
+// Adding the SASS middleware
 app.use(sassMiddleware({
   src: path.join(__dirname, 'sass'),
   dest: path.join(__dirname, 'public'),

@@ -1,4 +1,6 @@
 ---
+server:
+  port: 5000
 db:
   host: 'localhost'
   location: 'exhaustingacrowd'
