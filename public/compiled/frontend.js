@@ -114,23 +114,40 @@ function gotoEditor (path) {
     $('#timeAndDate').hide()
     $('#addNoteInterface').show()
     $('#note-text').val('').focus()
+
+    $('#clickArea').off('touch click').on('touch click', (e) => {
+      if (GLOBAL.MODE !== 'EDITOR' || $(e.target).closest('#addNoteInterface').length) {
+        return true
+      }
+
+      gotoVideo(path.points[0].time)
+    })
+
+    $('#note-text').off('keydown').on('keydown', (e) => {
+      switch (e.keyCode) {
+        case 27:
+          gotoVideo(path.points[0].time)
+      }
+    })
+
     $('#rewind').hide()
     $('#back').show()
   })
   var trySubmit = function () {
     var text = $('#note-text').val()
-    if (text) {
-      var note = new Note([])
-      note.path = path
-      note.text = text
-      // Submit the path to the API
-      api.submitNote(note)
-      // GOTO video mode again
-      gotoVideo(path.points[0].time - 5000)
-    } else {
-      $('#note-text').attr('placeholder', 'Please write something').focus()
+    if (!text) {
+      $('#note-text').attr('placeholder', 'per favore scrivere qualcosa').focus()
       $('#submitButton').unbind('click').click(trySubmit)
+      return
     }
+
+    var note = new Note([])
+    note.path = path
+    note.text = text
+    // Submit the path to the API
+    api.submitNote(note)
+    // GOTO video mode again
+    gotoVideo(path.points[0].time - 5000)
   }
   $('#submitButton').unbind('click').click(trySubmit)
   var keypress = function (e) {
@@ -170,14 +187,16 @@ function gotoVideo (seekTime) {
   })
 }
 function updateVideoLoop () {
-  if (GLOBAL.MODE == 'EDITOR') {
-    var time = drawingCanvas.mousePath.last().time
-    var diff = time - drawingCanvas.mousePath.points[0].time
-    if (diff < 3000) {
-      time += 3000 - diff
-    }
-    if (video.currentTime > time) {
-      this.video.seek(drawingCanvas.mousePath.points[0].time, undefined, true)
-    }
+  if (GLOBAL.MODE !== 'EDITOR') {
+    return
+  }
+
+  var time = drawingCanvas.mousePath.last().time
+  var diff = time - drawingCanvas.mousePath.points[0].time
+  if (diff < 3000) {
+    time += 3000 - diff
+  }
+  if (video.currentTime > time) {
+    this.video.seek(drawingCanvas.mousePath.points[0].time, undefined, true)
   }
 }

@@ -27,6 +27,7 @@ const NotesApi = (function () { // eslint-disable-line no-unused-vars
     }, 5000)
     this.siteId = site
   }
+
   NotesApi.prototype.startFetching = function (fetchRate, fetchWindowSize) {
     const _this = this
     this.fetchRate = fetchRate
