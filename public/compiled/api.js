@@ -7,7 +7,11 @@ const NotesApi = (function () { // eslint-disable-line no-unused-vars
     this.currentTime = 0
     this.submitNoteThrottle = _.throttle(function (note) {
       // console.log("Submit ", note.path.points, note.text);
-      ga('send', 'event', 'API', 'SubmitNote', 'submit')
+
+      if (typeof ga === 'function') {
+        ga('send', 'event', 'API', 'SubmitNote', 'submit')
+      }
+
       $.ajax({
         type: 'POST',
         dataType: 'json',
