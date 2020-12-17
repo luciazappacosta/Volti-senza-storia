@@ -130,8 +130,6 @@ body {
 }
 
 #infoHeader {
-  position: absolute;
-  top: $edgePad;
   left: $edgePad;
   display: inline-block;
   padding: 0 $innerPad $innerPad;
@@ -156,8 +154,6 @@ body {
 }
 
 #logoHeader {
-  position: absolute;
-  top: $edgePad;
   right: $edgePad;
   display: inline-block;
   padding: $innerPad;
@@ -167,8 +163,6 @@ body {
 }
 
 #locationHeader {
-  position: absolute;
-  top: $edgePad;
   left: $edgePad;
   display: inline-block;
   padding: $innerPad/2;
@@ -185,7 +179,23 @@ body {
   }
 }
 
-#logoHeader, #infoHeader, #locationHeader {
+#titleHeader {
+  $w: 110px;
+  box-sizing: border-box;
+  width: $w;
+  margin-left: -0.5 * $w;
+  left: 50%;
+  display: inline-block;
+  padding: $innerPad/2;
+  font-size: 0.8em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+#logoHeader, #infoHeader, #locationHeader, #titleHeader {
+  position: absolute;
+  top: $edgePad;
+
   z-index: 100;
   @include no-select;
   background-color: $transparentBlack;
