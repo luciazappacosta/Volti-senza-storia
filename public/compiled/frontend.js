@@ -9,7 +9,7 @@
 const sites = {
   pescara: {
     id: 0,
-    playlist: 'PLF1gLzjabatkm9K5gpQLiWy1uoP4dJCtS',
+    playlist: 'PLWjXOmeWtyfOSIil9YcwQxdWi0jDVi3Wf',
     videoDurations: [761],
     startTime: 'December 16, 2020 12:00:00',
     modulusHours: 12
