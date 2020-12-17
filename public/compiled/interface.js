@@ -41,7 +41,12 @@ const Interface = (function () { // eslint-disable-line no-unused-vars
     $('#linedrawing').animate({ opacity: '0' }, 250)
     $('#credits').show().animate({ opacity: '1' }, 500)
   }
-  Interface.prototype.hideCredits = function () {
+  Interface.prototype.hideCredits = function (event) {
+    if ($(event.target).closest('a').length) {
+      event.stopPropagation()
+      return true
+    }
+
     const e = $('#credits')
     e.animate({ opacity: '0' }, 500, function () {
       $('#credits').hide()
