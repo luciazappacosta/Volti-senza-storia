@@ -493,17 +493,25 @@ body {
     * {
       margin: 2vh;
     }
+
     p {
       font-size: 2vh;
       margin: 0;
     }
+
     .title {
       margin-bottom: -1vh;
       font-size: 5vh;
     }
+
     .location {
       font-size: 3vh;
       text-transform: uppercase;
+    }
+
+    .pre-line {
+      line-height: 1.3;
+      white-space: pre-line;
     }
   }
 }
