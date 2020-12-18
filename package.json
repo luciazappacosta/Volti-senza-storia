@@ -19,6 +19,7 @@
     "helpers.js": "git+https://github.com/adrenalin/helpers.js.git",
     "logger": "git+https://github.com/adrenalin/logger.git",
     "mobile-detect": "^1.2.0",
+    "moment-timezone": "^0.5.32",
     "node-sass-middleware": "^0.11.0",
     "pg": "^8.5.1",
     "raven": "^0.7.3",
