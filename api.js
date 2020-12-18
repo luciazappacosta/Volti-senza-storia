@@ -2,8 +2,11 @@ const errors = require('errors')
 const express = require('express')
 const bodyParser = require('body-parser')
 const Logger = require('logger')
+const Moment = require('moment-timezone')
 const boring = require('./boring')
 const db = require('./lib/db')
+
+Moment.tz.setDefault('Europe/Rome')
 
 const logger = new Logger('api')
 logger.setLevel(5)
@@ -215,54 +218,139 @@ module.exports = {
       res.send(result.rows.map(row => row.note))
     })
 
-    api.get('/notes', async (req, res, next) => {
-      const startTime = Math.round(req.query.timeframeStart)
-      const endTime = Math.round(req.query.timeframeEnd)
-      const ip = req.query.ip || req.ip
-      const site = req.query.site || 0
-      const result = await db.query({
-        text: `
-          SELECT
-            id,
-            time_begin,
-            time_end,
-            note,
-            path
-          FROM
-            notes
-          WHERE
-            time_end >= $1 AND
-            time_begin <= $2 AND
-            site = $3 AND
-            (
-              ip = $4 OR NOT (
-                hidden IS TRUE OR (
-                  HIDDEN IS NULL AND
-                  EXISTS (
-                    SELECT 1 FROM blacklist WHERE ip = notes.ip
+    api.get(['/notes', '/notes.html'], async (req, res, next) => {
+      try {
+        const filters = {
+          time_begin: Math.round(req.query.timeframeStart || 0),
+          time_end: Math.round(req.query.timeframeEnd) || 0,
+          site: req.query.site || 0
+        }
+
+        const params = []
+        const values = []
+
+        Object.keys(filters).forEach((key) => {
+          const value = filters[key]
+
+          if (!value) {
+            return
+          }
+
+          values.push(value)
+          params.push(`${key} = $${values.length}`)
+        })
+
+        values.push(req.query.ip || req.ip)
+
+        const limit = req.url.match(/.html/) ? '' : 'LIMIT 250'
+
+        const query = {
+          text: `
+            SELECT
+              id,
+              timestamp,
+              time_begin,
+              time_end,
+              note,
+              path
+            FROM
+              notes
+            WHERE
+              ${params.join(' AND ')} AND
+              (
+                ip = $${values.length} OR NOT (
+                  hidden IS TRUE OR (
+                    HIDDEN IS NULL AND
+                    EXISTS (
+                      SELECT 1 FROM blacklist WHERE ip = notes.ip
+                    )
                   )
                 )
               )
-            )
-          LIMIT 250
-        `,
-        values: [startTime, endTime, site, ip]
-      })
+            ${limit}
+            ORDER BY time_begin
+          `,
+          values: values
+        }
 
-      const rows = result.rows.map(row => {
-        const path = row.path.map((p) => {
-          return {
-            x: p[0],
-            y: p[1],
-            time: p[2]
-          }
+        const result = await db.query(query)
+
+        res.rows = result.rows.map(row => {
+          const path = row.path.map((p) => {
+            return {
+              x: p[0],
+              y: p[1],
+              time: p[2]
+            }
+          })
+
+          row.path = path
+          return row
         })
 
-        row.path = path
-        return row
-      })
+        next()
+      } catch (err) {
+        res.status(500).json({
+          status: 'error',
+          error: err.message
+        })
+      }
+    })
 
-      res.send(rows)
+    api.get('/notes.html', (req, res, next) => {
+      const content = `
+        <style type="text/css">
+          table {
+            border-spacing: 0;
+            border-collapse: collapse;
+          }
+
+          table td, table th {
+            padding: 0.1rem 0.5rem;
+            text-align: left;
+          }
+
+          table tbody tr {
+            border-style: solid none;
+            border-width: 1px;
+            border-color: #e1e1e1;
+          }
+
+          table thead tr th,
+          table tbody tr:nth-child(2n) td {
+            background-color: #f1f1f1;
+          }
+        </style>
+        <table>
+          <thead>
+            <tr>
+              <th>Created</th>
+              <th>Start</th>
+              <th>End</th>
+              <th>Note</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${res.rows.map((row) => {
+              const m = new Moment(row.timestamp)
+
+              return `<tr>
+              <td>${m.toISOString(true)}</td>
+              <td>${row.time_begin}</td>
+              <td>${row.time_end}</td>
+              <td style="white-space: pre-line">${row.note}</td>
+            </tr>`
+            }).join('\n            ')}
+          </tbody>
+        </table>
+      `
+
+      res
+        .send(content)
+    })
+
+    api.get('/notes', (req, res, next) => {
+      res.send(res.rows)
     })
 
     api.post('/notes', async (req, res, next) => {
