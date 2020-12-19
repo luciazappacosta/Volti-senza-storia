@@ -50,15 +50,8 @@ app.use(sassMiddleware({
 // Add new locations here.
 const sites = ['pescara']
 
-function randomChoice (array) {
-  return array[Math.floor(Math.random() * array.length)]
-}
-
 app.get('/', function (req, res) {
-  // To redirect the main page during an exhibition, modify the next line.
-  // const location = 'beijing';
-  const location = randomChoice(sites)
-  res.redirect('/' + location)
+  res.sendFile(path.join(__dirname, 'public/index.html'))
 })
 
 sites.forEach(function (site) {

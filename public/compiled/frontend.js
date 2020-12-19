@@ -16,7 +16,8 @@ const sites = {
   }
 }
 let recording = false
-const site = location.pathname.replace('/', '')
+const site = window.location.pathname.replace('/', '') || Object.keys(sites)[0]
+
 // Fetch every 15sec, fetch 20sec of data
 const api = new NotesApi(sites[site].id)
 api.startFetching(15000, 20000)
@@ -24,11 +25,10 @@ const timeUntilReload = 20 * 60 * 1000 // reload every 20 minutes
 function createMovementTimeout () {
   return setTimeout(function () {
     if (!recording) {
-      location.reload()
+      window.location.reload()
     }
   }, timeUntilReload)
 }
-
 let drawingCanvas, ui, video, clock
 
 Clock.startTime = sites[site].startTime
@@ -132,7 +132,6 @@ function gotoEditor (path) {
     $('#rewind').hide()
     $('#back').show()
   })
-
   const trySubmit = function () {
     const text = $('#note-text').val()
     if (!text) {
@@ -141,7 +140,7 @@ function gotoEditor (path) {
       return
     }
 
-    const note = new Note([])
+    var note = new Note([])
     note.path = path
     note.text = text
     // Submit the path to the API
@@ -149,7 +148,6 @@ function gotoEditor (path) {
     // GOTO video mode again
     gotoVideo(path.points[0].time - 5000)
   }
-
   $('#submitButton').unbind('click').click(trySubmit)
   const keypress = function (e) {
     if (e.which === 13) {
@@ -195,6 +193,7 @@ function updateVideoLoop () {
 
   let time = drawingCanvas.mousePath.last().time
   const diff = time - drawingCanvas.mousePath.points[0].time
+
   if (diff < 3000) {
     time += 3000 - diff
   }
