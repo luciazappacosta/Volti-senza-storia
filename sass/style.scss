@@ -73,29 +73,6 @@ body {
   right: 0;
   bottom: 0;
   overflow: hidden;
-
-  &.ready {
-    &:not(.triggered) {
-      &:before {
-        display: flex;
-        align-items: center;
-        align-content: center;
-        justify-content: center;
-        text-align: center;
-        content: '';
-        position: absolute;
-        left: 0;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        z-index: 1000;
-      }
-    }
-
-    #loading {
-      display: none;
-    }
-  }
 }
 
 #videocontainer {
@@ -483,12 +460,15 @@ body {
   background-color: white;
   @include no-select;
   cursor: default;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   #loading-middle {
     position: relative;
-    top: 35vh;
     color: gray;
     text-rendering: geometricPrecision;
+    padding: 1rem 1rem 4rem;
 
     * {
       margin: 2vh;
@@ -512,6 +492,35 @@ body {
     .pre-line {
       line-height: 1.3;
       white-space: pre-line;
+    }
+
+    .state-watch {
+      margin: 0 0 30px;
+      height: 30px;
+    }
+  }
+
+  #initial-spinner {
+    & + #start-interactions {
+      display: none;
+    }
+
+    &.hidden {
+      display: none;
+
+      & + #start-interactions {
+        display: inline-block;
+        background-color: black;
+        padding: 0.2rem 0.5rem;
+        color: white;
+        font-size: 150%;
+        cursor: pointer;
+        text-decoration: none;
+
+        &:hover, &:active {
+          background-color: #444;
+        }
+      }
     }
   }
 }
