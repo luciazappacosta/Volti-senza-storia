@@ -1,8 +1,8 @@
 /// <reference path="../typings/tsd.d.ts" />
-const YT_VIDEO_STATE_UNSTARTED = -1
+const YT_VIDEO_STATE_UNSTARTED = -1 // eslint-disable-line no-unused-vars
 const YT_VIDEO_STATE_ENDED = 0
 const YT_VIDEO_STATE_PLAYING = 1
-const YT_VIDEO_STATE_CUED = 5
+const YT_VIDEO_STATE_CUED = 5 // eslint-disable-line no-unused-vars
 
 const VideoPlayer = (function () { // eslint-disable-line no-unused-vars
   function VideoPlayer (playlist, durations, modulusHours, events) {
@@ -37,7 +37,7 @@ const VideoPlayer = (function () { // eslint-disable-line no-unused-vars
       width: 640,
       // videoId: '',
       playerVars: {
-        autoplay: 1,
+        autoplay: 0,
         controls: 0,
         disablekb: 1,
         enablejsapi: 1,
@@ -66,30 +66,22 @@ const VideoPlayer = (function () { // eslint-disable-line no-unused-vars
     const player = $('#videocontainer')
     const size = this.calculatePlayerSize()
 
-    $('#application')
-      .addClass('ready')
-
-    const removeOverlay = () => {
-      $('#application')
-        .addClass('triggered')
-        .off('click.play touch.play')
-    }
-
-    const checkIfPlaying = setInterval(() => {
-      if (this.ytplayer.getPlayerState() === YT_VIDEO_STATE_PLAYING) {
-        removeOverlay()
-        clearInterval(checkIfPlaying)
+    $('#initial-spinner').addClass('hidden')
+    $('#start-interactions').on('click', (e) => {
+      try {
+        e.preventDefault()
+        e.stopPropagation()
+        ui.hideLoadingScreen()
+        this.ytplayer.playVideo()
+      } catch (err) {
+        console.log(err)
       }
-    }, 100)
 
-    $('#application')
-      .on('click.play touch.play', () => {
-        removeOverlay()
-        if (this.ytplayer.getPlayerState() !== YT_VIDEO_STATE_PLAYING) {
-          this.ytplayer.playVideo()
-          return false
-        }
-      })
+      return false
+    })
+
+    // $('#application')
+    //   .addClass('ready')
 
     player
       .css({
