@@ -8,6 +8,7 @@ const Interface = (function () { // eslint-disable-line no-unused-vars
       if (_this.events.onResize) { _this.events.onResize() }
     })
   }
+
   Interface.prototype.hideLoadingScreen = function () {
     $('#initial-spinner').animate({
       opacity: '0'
@@ -20,6 +21,7 @@ const Interface = (function () { // eslint-disable-line no-unused-vars
       $('#persistent').show()
     })
   }
+
   Interface.prototype.hideVideo = function (cb) {
     const e = $('#persistent-spinner')
     e.show()
@@ -28,6 +30,7 @@ const Interface = (function () { // eslint-disable-line no-unused-vars
       setTimeout(cb, 250)
     })
   }
+
   Interface.prototype.showVideo = function (cb) {
     const e = $('#persistent-spinner')
     e.animate({ opacity: '0' }, 250, function () {
@@ -36,11 +39,13 @@ const Interface = (function () { // eslint-disable-line no-unused-vars
       setTimeout(cb, 250)
     })
   }
+
   Interface.prototype.showCredits = function () {
     $('#overlay').animate({ opacity: '0' }, 250)
     $('#linedrawing').animate({ opacity: '0' }, 250)
     $('#credits').show().animate({ opacity: '1' }, 500)
   }
+
   Interface.prototype.hideCredits = function (event) {
     if ($(event.target).closest('a').length) {
       event.stopPropagation()
@@ -54,5 +59,6 @@ const Interface = (function () { // eslint-disable-line no-unused-vars
     $('#overlay').animate({ opacity: '1' }, 500)
     $('#linedrawing').animate({ opacity: '1' }, 500)
   }
+
   return Interface
 })()

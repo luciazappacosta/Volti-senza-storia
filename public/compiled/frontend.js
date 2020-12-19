@@ -15,12 +15,12 @@ const sites = {
     modulusHours: 12
   }
 }
-var recording = false
-var site = location.pathname.replace('/', '')
+let recording = false
+const site = location.pathname.replace('/', '')
 // Fetch every 15sec, fetch 20sec of data
-var api = new NotesApi(sites[site].id)
+const api = new NotesApi(sites[site].id)
 api.startFetching(15000, 20000)
-var timeUntilReload = 20 * 60 * 1000 // reload every 20 minutes
+const timeUntilReload = 20 * 60 * 1000 // reload every 20 minutes
 function createMovementTimeout () {
   return setTimeout(function () {
     if (!recording) {
@@ -28,13 +28,12 @@ function createMovementTimeout () {
     }
   }, timeUntilReload)
 }
-var drawingCanvas
-var ui
-var video
-var clock
+
+let drawingCanvas, ui, video, clock
+
 Clock.startTime = sites[site].startTime
 // Wait for a go from youtube api
-var onYouTubePlayerAPIReady = function () {
+onYouTubePlayerAPIReady = function () {
   video = new VideoPlayer(sites[site].playlist, sites[site].videoDurations, sites[site].modulusHours, {
     onLoadComplete: function () {
       video.setTime(moment(), function () {
@@ -64,7 +63,7 @@ var onYouTubePlayerAPIReady = function () {
     clock = new Clock()
     window.onhashchange = function () {
       video.seek(parseInt(location.hash.substring(1)))
-      var lastCharacter = location.hash.substring(location.hash.length - 1)
+      const lastCharacter = location.hash.substring(location.hash.length - 1)
       if (lastCharacter == '-') {
         recording = true
         $("img[src='rewind.png']").remove()
@@ -89,7 +88,7 @@ var onYouTubePlayerAPIReady = function () {
       })
     })
     // reload the page every so often if the visitor doesn't move their mouse
-    var movementTimeout = createMovementTimeout()
+    let movementTimeout = createMovementTimeout()
     document.onmousemove = function () {
       clearTimeout(movementTimeout)
       movementTimeout = createMovementTimeout()
@@ -133,15 +132,16 @@ function gotoEditor (path) {
     $('#rewind').hide()
     $('#back').show()
   })
-  var trySubmit = function () {
-    var text = $('#note-text').val()
+
+  const trySubmit = function () {
+    const text = $('#note-text').val()
     if (!text) {
       $('#note-text').attr('placeholder', 'per favore scrivere qualcosa').focus()
       $('#submitButton').unbind('click').click(trySubmit)
       return
     }
 
-    var note = new Note([])
+    const note = new Note([])
     note.path = path
     note.text = text
     // Submit the path to the API
@@ -149,15 +149,17 @@ function gotoEditor (path) {
     // GOTO video mode again
     gotoVideo(path.points[0].time - 5000)
   }
+
   $('#submitButton').unbind('click').click(trySubmit)
-  var keypress = function (e) {
-    if (e.which == 13) {
+  const keypress = function (e) {
+    if (e.which === 13) {
       trySubmit()
       e.preventDefault()
       e.stopPropagation()
       return false
     }
-    var textElm = $('#note-text')
+
+    const textElm = $('#note-text')
     if (textElm.val().length >= 140) {
       // textElm.val(textElm.val().substring(0,140));
       e.preventDefault()
@@ -191,8 +193,8 @@ function updateVideoLoop () {
     return
   }
 
-  var time = drawingCanvas.mousePath.last().time
-  var diff = time - drawingCanvas.mousePath.points[0].time
+  let time = drawingCanvas.mousePath.last().time
+  const diff = time - drawingCanvas.mousePath.points[0].time
   if (diff < 3000) {
     time += 3000 - diff
   }
