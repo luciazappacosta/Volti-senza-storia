@@ -218,87 +218,89 @@ module.exports = {
       res.send(result.rows.map(row => row.note))
     })
 
-    api.get(['/notes', '/notes.html'], async (req, res, next) => {
-      try {
-        const filters = {
-          time_begin: Math.round(req.query.timeframeStart || 0),
-          time_end: Math.round(req.query.timeframeEnd) || 0,
-          site: req.query.site || 0
+    const fetchNotes = async (req) => {
+      const filters = {
+        time_begin: Math.round(req.query.timeframeStart || 0) || null,
+        time_end: Math.round(req.query.timeframeEnd) || null,
+        site: Number(req.query.site || 0)
+      }
+
+      const params = []
+      const values = []
+      const ops = {
+        time_begin: '>=',
+        time_end: '<'
+      }
+
+      Object.keys(filters).forEach((key) => {
+        const value = filters[key]
+
+        if (value == null) {
+          return
         }
 
-        const params = []
-        const values = []
+        const op = ops[key] || '='
 
-        Object.keys(filters).forEach((key) => {
-          const value = filters[key]
+        values.push(value)
+        params.push(`${key} ${op} $${values.length}`)
+      })
 
-          if (value == null) {
-            return
-          }
+      values.push(req.query.ip || req.ip)
 
-          values.push(value)
-          params.push(`${key} = $${values.length}`)
-        })
+      const limit = req.url.match(/.html/) ? '' : 'LIMIT 250'
 
-        values.push(req.query.ip || req.ip)
-
-        const limit = req.url.match(/.html/) ? '' : 'LIMIT 250'
-
-        const query = {
-          text: `
-            SELECT
-              id,
-              timestamp,
-              time_begin,
-              time_end,
-              note,
-              path
-            FROM
-              notes
-            WHERE
-              ${params.join(' AND ')} AND
-              (
-                ip = $${values.length} OR NOT (
-                  hidden IS TRUE OR (
-                    HIDDEN IS NULL AND
-                    EXISTS (
-                      SELECT 1 FROM blacklist WHERE ip = notes.ip
-                    )
+      const query = {
+        text: `
+          SELECT
+            id,
+            timestamp,
+            time_begin,
+            time_end,
+            note,
+            path
+          FROM
+            notes
+          WHERE
+            ${params.join(' AND ')} AND
+            (
+              ip = $${values.length} OR NOT (
+                hidden IS TRUE OR (
+                  HIDDEN IS NULL AND
+                  EXISTS (
+                    SELECT 1 FROM blacklist WHERE ip = notes.ip
                   )
                 )
               )
-            ORDER BY time_begin
-            ${limit}
-          `,
-          values: values
-        }
-
-        console.log('query', query)
-        const result = await db.query(query)
-
-        res.rows = result.rows.map(row => {
-          const path = row.path.map((p) => {
-            return {
-              x: p[0],
-              y: p[1],
-              time: p[2]
-            }
-          })
-
-          row.path = path
-          return row
-        })
-
-        next()
-      } catch (err) {
-        res.status(500).json({
-          status: 'error',
-          error: err.message
-        })
+            )
+          ORDER BY time_begin
+          ${limit}
+        `,
+        values: values
       }
+
+      const result = await db.query(query)
+
+      return result.rows.map(row => {
+        const path = row.path.map((p) => {
+          return {
+            x: p[0],
+            y: p[1],
+            time: p[2]
+          }
+        })
+
+        row.path = path
+        return row
+      })
+    }
+
+    api.get('/notes', async (req, res, next) => {
+      const notes = await fetchNotes(req)
+      res.send(notes)
     })
 
-    api.get('/notes.html', (req, res, next) => {
+    api.get('/notes.html', async (req, res, next) => {
+      const notes = await fetchNotes(req)
       const content = `
         <style type="text/css">
           table {
@@ -332,7 +334,7 @@ module.exports = {
             </tr>
           </thead>
           <tbody>
-            ${res.rows.map((row) => {
+            ${notes.map((row) => {
               const m = new Moment(row.timestamp)
 
               return `<tr>
@@ -348,10 +350,6 @@ module.exports = {
 
       res
         .send(content)
-    })
-
-    api.get('/notes', (req, res, next) => {
-      res.send(res.rows)
     })
 
     api.post('/notes', async (req, res, next) => {
