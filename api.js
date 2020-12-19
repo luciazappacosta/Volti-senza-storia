@@ -232,7 +232,7 @@ module.exports = {
         Object.keys(filters).forEach((key) => {
           const value = filters[key]
 
-          if (!value) {
+          if (value == null) {
             return
           }
 
@@ -267,12 +267,13 @@ module.exports = {
                   )
                 )
               )
-            ${limit}
             ORDER BY time_begin
+            ${limit}
           `,
           values: values
         }
 
+        console.log('query', query)
         const result = await db.query(query)
 
         res.rows = result.rows.map(row => {
